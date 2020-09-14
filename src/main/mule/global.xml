@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="d51ede2a-62b5-4020-bf5a-c00e13a1d5ac" >
+		<http:listener-connection host="0.0.0.0" port="${http.private.port}" />
+	</http:listener-config>
+	<api-gateway:autodiscovery apiId="${api.autodiscovery.id}" doc:name="API Autodiscovery" doc:id="5bf85289-cabd-4d71-aaf5-963df6e89ae2" flowRef="${api.autodiscovery.flow}" />
+	<configuration-properties doc:name="Configuration properties" doc:id="9fadf261-71de-4b2c-a562-3eb77590ae42" file="properties/${mule.env}-properties.yaml" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="e06b17ce-408e-4d00-bb17-671200138072" responseTimeout="${http.responseTimeout}">
+		<http:request-connection protocol="HTTPS" host="${downstream.host}" port="${downstream.port}" >
+		</http:request-connection>
+	</http:request-config>
+	
+	
+</mule>

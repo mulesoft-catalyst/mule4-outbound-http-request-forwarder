@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd">
+	<flow name="http-request-forwarderFlow" doc:id="6ba97b45-d3f1-4edf-84d9-a090ef2bc13e" >
+		<http:listener doc:name="Listener" doc:id="46f494b0-323f-4df1-9a82-e3a285b2a81b" config-ref="HTTP_Listener_config" path="/*">
+			<http:error-response statusCode="#[error.muleMessage.attributes.StatusCode]">
+				<http:body ><![CDATA[#[error.muleMessage.payload]]]></http:body>
+				<http:headers ><![CDATA[#[error.muleMessage.attributes.headers]]]></http:headers>
+			</http:error-response>
+		</http:listener>
+		<logger level="INFO" doc:name="Log request received" doc:id="67598d4a-e381-476c-9ac1-42f5ecd5bffc" message='#["Request received by " ++ app.name]'/>
+		<ee:transform doc:name="Propagate URL, method, headers, query params, payload">
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="downstreamHeaders" ><![CDATA[%dw 2.0
+output application/java
+---
+(attributes.headers mapObject (value,key,index) -> { 
+	(key) : (value)
+})]]></ee:set-variable>
+				<ee:set-variable variableName="downstreamQueryParams" ><![CDATA[%dw 2.0
+output application/java
+---
+(attributes.queryParams mapObject (value,key,index) -> { 
+	(key) : (value)
+})
+]]></ee:set-variable>
+				<ee:set-variable variableName="downstreamUri" ><![CDATA[%dw 2.0
+output application/json
+---
+attributes.requestPath]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log outbound request" doc:id="d9972029-4daf-4a2b-bb26-d97baecf19b0" message='#["Forwarding request to " ++ attributes.requestUri ++ " via the downstream service at " ++ p("downstream.host")]'/>
+		<http:request method="#[attributes.method]" doc:name="Forward Request" doc:id="ce3e27cb-5269-4df9-9233-a4e4e092194f" config-ref="HTTP_Request_configuration" path="#[vars.downstreamUri]">
+			<reconnect />
+			<http:headers ><![CDATA[#[output application/java
+---
+ vars.downstreamHeaders]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+vars.downstreamQueryParams]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="Log response received " doc:id="3652f066-e325-489c-ae0d-1036a3d9efc9" message='#["Response received from downstream service"]'/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6ced9c61-9f91-42d8-abcd-9cb9b367d1cf" type="ANY">
+				<logger level="ERROR" doc:name="Logger" doc:id="8466fcb3-0cac-4714-b677-57a177bc8c6f" message='#["Downstream exception on proxied service. Propagating to proxy consumer"]' />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,13 @@
+http:
+  private:
+    port: "8091"
+  responseTimeout: "10000"
+api:
+  autodiscovery:
+    id: "11111111"
+    flow: "http-request-forwarderFlow"
+downstream:
+  host: ""
+  port: "443"
+  path: "/"
+
